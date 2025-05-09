@@ -14,15 +14,29 @@ exports.getAllMovies = (req, res) => {
 exports.showMovie = (req, res) => {
     const { id } = req.params;
 
-    db.query('SELECT * FROM movies WHERE id = ?', [id], (err, results) => {
+    // Prima query: ottieni i dettagli del film
+    db.query('SELECT * FROM movies WHERE id = ?', [id], (err, movieResults) => {
         if (err) {
-            return res.status(500).json({ error: 'Errore nella query' });
+            return res.status(500).json({ error: 'Errore nella query del film' });
         }
 
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Post non trovato' });
+        if (movieResults.length === 0) {
+            return res.status(404).json({ error: 'Film non trovato' });
         }
 
-        res.json(results[0]);
+        const movie = movieResults[0];
+
+        // Seconda query: ottieni le recensioni associate al film
+        db.query('SELECT * FROM reviews WHERE movie_id = ?', [id], (err, reviewResults) => {
+            if (err) {
+                return res.status(500).json({ error: 'Errore nella query delle recensioni' });
+            }
+
+            // Aggiungi le recensioni al film
+            movie.reviews = reviewResults;
+
+            // Invia la risposta completa
+            res.json(movie);
+        });
     });
 };
