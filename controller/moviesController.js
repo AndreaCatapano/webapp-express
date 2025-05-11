@@ -1,16 +1,23 @@
 const db = require('../data/movies_db.js');
+const IMAGES_URL = process.env.IMAGES_URL || '/images';
 
-// GET: tutti i post
 exports.getAllMovies = (req, res) => {
     db.query('SELECT * FROM movies', (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Errore nella query' });
         }
-        res.json(results);
+
+        const moviesWithImages = results.map(movie => {
+            if (movie.image) {
+                movie.imageUrl = `${IMAGES_URL}/${movie.image}`;
+            }
+            return movie;
+        });
+
+        res.json(moviesWithImages);
     });
 };
 
-// GET: un singolo post per ID
 exports.showMovie = (req, res) => {
     const { id } = req.params;
 
@@ -26,16 +33,18 @@ exports.showMovie = (req, res) => {
 
         const movie = movieResults[0];
 
+        if (movie.image) {
+            movie.imageUrl = `${IMAGES_URL}/${movie.image}`;
+        }
+
         // Seconda query: ottieni le recensioni associate al film
         db.query('SELECT * FROM reviews WHERE movie_id = ?', [id], (err, reviewResults) => {
             if (err) {
                 return res.status(500).json({ error: 'Errore nella query delle recensioni' });
             }
 
-            // Aggiungi le recensioni al film
             movie.reviews = reviewResults;
 
-            // Invia la risposta completa
             res.json(movie);
         });
     });
