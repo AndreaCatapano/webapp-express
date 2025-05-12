@@ -40,10 +40,12 @@ exports.showMovie = (req, res) => {
         // Seconda query: ottieni le recensioni associate al film
         db.query('SELECT * FROM reviews WHERE movie_id = ?', [id], (err, reviewResults) => {
             if (err) {
-                return res.status(500).json({ error: 'Errore nella query delle recensioni' });
+                console.error('Errore nel recupero delle recensioni:', err);
+                movie.reviews = [];
+                movie.reviewsError = 'Impossibile caricare le recensioni';
+            } else {
+                movie.reviews = reviewResults;
             }
-
-            movie.reviews = reviewResults;
 
             res.json(movie);
         });
