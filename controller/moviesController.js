@@ -2,9 +2,24 @@ const db = require('../data/movies_db.js');
 const IMAGES_URL = process.env.IMAGES_URL || '/images';
 
 exports.getAllMovies = (req, res) => {
-    db.query('SELECT * FROM movies', (err, results) => {
+    const search = req.query.search;
+    const params = [];
+    let sql = 'SELECT * FROM movies';
+
+
+    if (search) {
+        sql += ` WHERE 
+            title LIKE ? OR 
+            director LIKE ? OR 
+            genre LIKE ? OR 
+            release_year LIKE ?`;
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    db.query(sql, params, (err, results) => {
         if (err) {
-            return res.status(500).json({ error: 'Errore nella query' });
+            return res.status(500).json({ error: 'Errore nella query', detail: err.message });
         }
 
         const moviesWithImages = results.map(movie => {
